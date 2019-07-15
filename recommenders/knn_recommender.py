@@ -3,7 +3,8 @@ from scipy.sparse import csr_matrix
 from sklearn.metrics.pairwise import cosine_similarity
 
 class kNNRecommender:
-    def __init__(self):
+    def __init__(self, k):
+        self.n_neighbours = k
         self.similarity_matrix = 0
 
     def fit(self, train_data):
@@ -11,6 +12,7 @@ class kNNRecommender:
         self.similarity_matrix = cosine_similarity(sparse_mat)
 
     def predict(self, test_data):
-        predictions = np.full((test_data.shape[0], 1), self.mean)
-
-        return np.append(test_data, predictions, axis=1)
+        np.fill_diagonal(self.similarity_matrix, -1)
+        temp = np.sort(self.similarity_matrix, axis=1)[:, -self.n_neighbours:]
+        a = temp[2, :]
+        print([np.where(self.similarity_matrix[2, :] == dist) for dist in a])
