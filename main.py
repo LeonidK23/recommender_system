@@ -16,14 +16,16 @@ clf_rand = RandomRecommender()
 clf_rand.fit(X_train)
 predictions_rand = clf_rand.predict(X_test)
 
-clf_knn = kNNRecommender(3)
+clf_knn = kNNRecommender(5)
 clf_knn.fit(X_train)
-clf_knn.predict(X_test)
+predictions_kNN = clf_knn.predict(X_test)
 
 np.savetxt("data/qualifying_mean.csv", predictions_mean,
            delimiter=",", newline="\n", encoding="utf-8")
 np.savetxt("data/qualifying_random.csv", predictions_rand,
            delimiter=",", newline="\n", encoding="utf-8")
+np.savetxt("data/qualifying_knn.csv", predictions_kNN,
+          delimiter=",", newline="\n", encoding="utf-8")
 
 # TODO: add train_test_split
 # TODO: cross_validation,

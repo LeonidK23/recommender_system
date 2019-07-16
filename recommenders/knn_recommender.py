@@ -9,8 +9,10 @@ class kNNRecommender:
         self.train_data = 0
         self.min = 0
         self.max = 0
+        self.global_mean = 0
 
     def fit(self, train_data):
+        self.global_mean = np.mean(train_data[:, 2])
         sparse_mat = csr_matrix((train_data[:, 2], (train_data[:, 0], train_data[:, 1])))
         self.train_data = sparse_mat.todense()
         self.min, self.max = np.min(self.train_data), np.max(self.train_data)
@@ -25,9 +27,8 @@ class kNNRecommender:
         return [ind[0][0] for ind in indices]
 
     def collect_user_items_dict(self, test_data):
-        sorted_test_data = test_data[test_data[:,0].argsort()]
         items_to_fill = {}
-        for entry in sorted_test_data:
+        for entry in test_data:
             if entry[0] not in items_to_fill:
                 items_to_fill[entry[0]] = []
             items_to_fill[entry[0]] += [entry[1].item()]
@@ -41,5 +42,7 @@ class kNNRecommender:
             neighbours_items = np.take(self.train_data, self.k_neighbours[user], axis=0)
             for item in users_items_to_fill[user]:
                 item_prediction = int(np.ceil(np.mean(neighbours_items[:, item])))
-                # predictions.append([user, item, item_prediction if item_prediction!=0 else self.item_means[item]])
-                print([user, item, item_prediction if item_prediction!=0 else np.random.randint(self.min, self.max + 1)])
+                predictions.append([user, item, item_prediction if item_prediction!=0 else
+                                    self.global_mean])
+
+        return predictions
