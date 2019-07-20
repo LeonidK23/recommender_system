@@ -6,6 +6,7 @@ from recommenders.random_recommender import RandomRecommender
 from recommenders.knn_user_user_recommender import kNNRecommenderUU
 from recommenders.knn_user_item_recommender import kNNRecommenderUI
 from recommenders.knn_item_item_recommender import kNNRecommenderII
+from auxiliary.cross_validation import cross_validation
 
 X_test = np.genfromtxt(os.path.join("data", "qualifying_blanc.csv"), delimiter=",", dtype=np.int)
 X_train = np.genfromtxt(os.path.join("data", "train.csv"), delimiter=",", dtype=np.int)
@@ -26,9 +27,16 @@ X_train = np.genfromtxt(os.path.join("data", "train.csv"), delimiter=",", dtype=
 # clf_knn_II.fit(X_train)
 # predictions_kNN_II = clf_knn_II.predict(X_test)
 
-clf_knn_UI = kNNRecommenderUI(3)
-clf_knn_UI.fit(X_train)
-predictions_kNN_UI = clf_knn_UI.predict(X_test)
+# clf_knn_UI = kNNRecommenderUI(3)
+# clf_knn_UI.fit(X_train)
+# predictions_kNN_UI = clf_knn_UI.predict(X_test)
+
+clf = kNNRecommenderII(3) # Error = appr. 3.7
+# clf = RandomRecommender() # Error = 41.5
+# clf = MeanRecommender() # Error = 5.5
+# clf = kNNRecommenderUU(3) # Error = 4.3
+acc = cross_validation(clf, X_train)
+print(acc)
 
 # np.savetxt("data/qualifying_mean.csv", predictions_mean,
 #            delimiter=",", newline="\n", encoding="utf-8")
