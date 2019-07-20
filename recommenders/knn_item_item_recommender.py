@@ -42,4 +42,4 @@ class kNNRecommenderII:
                 predictions.append([user, item, user_prediction if user_prediction!=0 else
                                     self.global_mean])
 
-        return predictions
+        return np.array(predictions)

@@ -38,8 +38,8 @@ class kNNRecommenderUU:
         for user in users_items_to_fill:
             neighbours = np.take(self.train_data, self.k_neighbours[user], axis=0)
             for item in users_items_to_fill[user]:
-                item_prediction = int(np.ceil(np.mean(neighbours[:, item])))
+                item_prediction = np.around(np.mean(neighbours[:, item]))
                 predictions.append([user, item, item_prediction if item_prediction!=0 else
                                     self.global_mean])
 
-        return predictions
+        return np.array(predictions)

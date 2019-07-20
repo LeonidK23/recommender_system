@@ -54,4 +54,4 @@ class kNNRecommenderUI:
                 # item_prediction = int(np.ceil(nearest_users_items.mean())) # Try: not round or use floor
                 predictions.append([user, item, item_prediction])
 
-        return predictions
+        return np.array(predictions)
