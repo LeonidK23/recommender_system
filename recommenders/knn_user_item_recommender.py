@@ -17,13 +17,13 @@ class kNNRecommenderUI:
         simil_matrix_users = cosine_similarity(sparse_mat)
         np.fill_diagonal(simil_matrix_users, -1)
         k_nearest_users_dists = np.sort(simil_matrix_users, axis=1)[:, -self.n_neighbours:]
-        self.k_nearest_users = np.array([self.get_neighbour_indices(simil_matrix_users[i, :], k_nearest_users_dists[i, :]) + [i]
+        self.k_nearest_users = np.array([self.get_neighbour_indices(simil_matrix_users[i, :], k_nearest_users_dists[i, :])
                               for i in range(k_nearest_users_dists.shape[0])])
         # Find nearest neighbours for each item
         simil_matrix_items = cosine_similarity(sparse_mat.transpose())
         np.fill_diagonal(simil_matrix_items, -1)
         k_nearest_items_dists = np.sort(simil_matrix_items, axis=1)[:, -self.n_neighbours:]
-        self.k_nearest_items = np.array([self.get_neighbour_indices(simil_matrix_items[i, :], k_nearest_items_dists[i, :]) + [i]
+        self.k_nearest_items = np.array([self.get_neighbour_indices(simil_matrix_items[i, :], k_nearest_items_dists[i, :])
                       for i in range(k_nearest_items_dists.shape[0])])
 
     def get_neighbour_indices(self, user, distances):
@@ -44,22 +44,17 @@ class kNNRecommenderUI:
         predictions = []
         for user in users_items_to_fill:
             for item in users_items_to_fill[user]:
-                # neighbours_users = np.take(self.train_data, self.k_nearest_users[user], axis=0) # old version
-                # neighbours_users = self.train_data[np.ix_(self.k_nearest_users[user])] # with dense matrix
                 neighbours_items = self.train_data[np.ix_([user], self.k_nearest_items[item])].A
-                neighbours_users = self.train_data[np.ix_(self.k_nearest_users[user], self.k_nearest_items[item])].A
-                means = np.mean(neighbours_users, axis=0)
-                weights = np.nan_to_num(means/np.sum(means))
-                item_prediction = np.around(np.sum(np.multiply(neighbours_items.reshape(1, -1), weights.reshape(1, -1))))
-                # neighbours_users = self.train_data[self.k_nearest_users[user], item].reshape(-1, 1)
-                # neighbours_items = self.train_data[user, self.k_nearest_items[item]].reshape(-1, 1)
-                # prediction = np.around(np.mean(np.concatenate((neighbours_items, neighbours_users))))
+                neighbours_users = self.train_data[np.ix_(self.k_nearest_users[user], [item])].A
+                other_neighbours = self.train_data[np.ix_(self.k_nearest_users[user], self.k_nearest_items[item])].A
 
-                # select from training data nearest users and nearest items to the unknow item/user
-                # except the unknown value of item to fill
-                # item_prediction = np.mean(np.asarray(neighbours_users).flatten()[:-1]) # try this with dense matrix
-                # item_prediction = self.global_mean if neighbours_users.shape[0] == 0 else np.mean(neighbours_users)
-                # item_prediction = int(np.ceil(nearest_users_items.mean())) # Try: not round or use floor
-                predictions.append([user, item, item_prediction])
+                nearest_items_prediction = np.mean(neighbours_items)
+                nearest_users_prediction = np.mean(np.multiply(neighbours_users,
+                                                   np.array([[0.15], [0.15], [0.7]])))
+                prediction = nearest_users_prediction if nearest_items_prediction == 0 else nearest_items_prediction
+                if prediction == 0:
+                    prediction = np.mean(other_neighbours)
+
+                predictions.append([user, item, prediction if prediction != 0 else 0])
 
         return np.array(predictions)
