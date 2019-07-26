@@ -26,17 +26,11 @@ class kNNRecommenderUI:
     #     self.k_nearest_items = np.array([self.get_neighbour_indices(simil_matrix_items[i, :], k_nearest_items_dists[i, :])
     #                   for i in range(k_nearest_items_dists.shape[0])])
     #
-    # def get_neighbour_indices(self, user, distances):
-    #     if np.sum(distances) == 0:
-    #         inds = np.random.choice(np.where(user == 0)[0], size=self.n_neighbours)
-    #     # elif np.unique(distances).shape[0] == 1:
-    #     #     inds = [np.where(user == distances[-1])[0][0]]
-    #     else:
-    #         inds = np.array([np.where(user == dist)[0][0] for dist in distances])
-    #         # inds = [ind[0][0] for ind in indices]
-    #
-    #     return inds
-    #
+    def get_neighbour_indices(self, user, distances):
+        inds = np.array([np.where(user == dist)[0][0] for dist in distances])
+
+        return inds
+
     def collect_user_items_dict(self, test_data):
         items_to_fill = {}
         for entry in test_data:
@@ -77,31 +71,20 @@ class kNNRecommenderUI:
     def pearson_corr(self, mat):
         mu = np.zeros((mat.shape[0], 1))
         corr_mat = np.zeros((mat.shape[0], mat.shape[0]))
+        corr_mat[:] = np.nan
         non_zeros_items_indices = np.array(list(set(mat.nonzero()[0])))
         non_zeros_items = mat[non_zeros_items_indices, :]
         non_zeros_mu = mu[non_zeros_items_indices]
         centered_items = non_zeros_items - non_zeros_mu
         for i in range(mat.shape[0]):
             mu[i] = np.nan if mat[i, :].data.shape[0]==0 else np.mean(mat[i, :].data)
-        for i in range(mat[1000:1500, :].shape[0]):
+        for i in range(mat.shape[0]):
             I_u = mat[i, :].nonzero()[1]
             if I_u.shape[0] > 0:
                 center_i = mat[i, :] - mu[i]
                 numerator = np.sum(np.multiply(center_i, centered_items), axis=1)
                 denumerator = np.multiply(np.sqrt(np.sum(np.square(center_i))), np.sqrt(np.sum(np.square(centered_items), axis=1)))
                 corr_mat[i, non_zeros_items_indices] = np.divide(numerator, denumerator).reshape(-1)
-
-                # for j in range(mat[1000:1500, :].shape[0]):
-                #     I_v = mat[j, :].nonzero()[1]
-                #     if I_v.shape[0] > 0:
-                #         similar_inds = np.intersect1d(I_u, I_v)
-                #         corr = np.sum((mat[i, similar_inds].data - mu[i])*(mat[j, similar_inds].data - mu[j])) \
-                #                 /(np.sqrt(np.sum(np.square(mat[i, similar_inds].data - mu[i])))*         \
-                #                  np.sqrt(np.sum(np.square(mat[j, similar_inds].data - mu[j]))))
-                #         corr_mat[i, j] = corr
-                #
-                #     else:
-                #         corr_mat[i, j] = np.nan
             else:
                 corr_mat[i, :] = np.nan
 
@@ -114,7 +97,7 @@ class kNNRecommenderUI:
         self.train_data = csr_matrix((train_data[:, 2], (train_data[:, 0], train_data[:, 1]))).T
         self.sim_mat_items = self.pearson_corr(self.train_data)
 
-    # def predict(self, test_data):
+    def predict(self, test_data):
         # The best config
         # items_user = self.collect_items_user_dict(test_data)
         # predictions = []
@@ -132,4 +115,20 @@ class kNNRecommenderUI:
         #         #     prediction = np.mean(nearest_feedbacks[:, user].data)
         #         predictions.append([user, item, prediction])
 
-        # return np.array(predictions)
+
+        items_user = self.collect_items_user_dict(test_data)
+        predictions = []
+        for item in items_user:
+            dists = np.sort(self.sim_mat_items[item, :])
+            num_dists = dists[~np.isnan(dists)]
+            nearest_dists = num_dists[-self.n_neighbours:]
+            nearest_items_inds = []
+            for dist in nearest_dists:
+                nearest_items_inds.append(np.where(self.sim_mat_items[item, :] == dist)[0][0])
+            nearest_items = self.train_data[np.array(nearest_items_inds), :]
+            print(nearest_items.shape)
+            # for user in items_user[item]:
+
+
+
+        return np.array(predictions)
