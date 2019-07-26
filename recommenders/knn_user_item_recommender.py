@@ -70,6 +70,7 @@ class kNNRecommenderUI:
 
     def pearson_corr(self, mat):
         mu = np.zeros((mat.shape[0], 1))
+        non_zeros_items_indices = []
         corr_mat = np.zeros((mat.shape[0], mat.shape[0]))
         corr_mat[:] = np.nan
         non_zeros_items_indices = np.array(list(set(mat.nonzero()[0])))
@@ -81,9 +82,10 @@ class kNNRecommenderUI:
         for i in range(mat.shape[0]):
             I_u = mat[i, :].nonzero()[1]
             if I_u.shape[0] > 0:
-                center_i = mat[i, :] - mu[i]
+                # center_i = mat[i, :] - mu[i]
+                center_i = mat[i, :]
                 numerator = np.sum(np.multiply(center_i, centered_items), axis=1)
-                denumerator = np.multiply(np.sqrt(np.sum(np.square(center_i))), np.sqrt(np.sum(np.square(centered_items), axis=1)))
+                denumerator = np.sqrt(np.sum(np.square(center_i)))*np.sqrt(np.sum(np.square(centered_items), axis=1))
                 corr_mat[i, non_zeros_items_indices] = np.divide(numerator, denumerator).reshape(-1)
             else:
                 corr_mat[i, :] = np.nan
@@ -126,9 +128,18 @@ class kNNRecommenderUI:
             for dist in nearest_dists:
                 nearest_items_inds.append(np.where(self.sim_mat_items[item, :] == dist)[0][0])
             nearest_items = self.train_data[np.array(nearest_items_inds), :]
-            print(nearest_items.shape)
-            # for user in items_user[item]:
-
-
+            for user in items_user[item]:
+                nearest_ratings = nearest_items[:, user].data
+                ratings_inds = nearest_items[:, user].nonzero()[0]
+                # print(nearest_dists)
+                # print(nearest_ratings - np.mean(nearest_ratings))
+                # print(nearest_ratings)
+                # print(ratings_inds)
+                # print(nearest_dists)
+                # print(nearest_dists[ratings_inds])
+                # print(np.sum(nearest_dists[ratings_inds]))
+                # print('----------------------------------------')
+                prediction = np.sum(np.multiply(nearest_dists[ratings_inds], nearest_ratings))/np.sum(nearest_dists[ratings_inds])
+                predictions.append([user, item, np.mean(self.train_data[item, :]) if np.isnan(prediction) else prediction])
 
         return np.array(predictions)
