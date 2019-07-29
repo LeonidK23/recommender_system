@@ -10,14 +10,15 @@ def cross_validation(recommender, data, k=10):
     s = 0
     for i in range(k):
         if i < k-1:
-            rows_to_throw.append(np.random.choice(all_indices, size=batch_size, replace=False).tolist())
+            # rows_to_throw.append(np.random.choice(all_indices, size=batch_size, replace=False).tolist())
+            rows_to_throw.append(all_indices[:batch_size])
         else:
             rows_to_throw.append(all_indices)
         all_indices = list(set(all_indices) - set(rows_to_throw[i]))
 
     all_indices = [ind for ind in range(len(data))]
     mse = 0
-    for rows in rows_to_throw:
+    for rows in rows_to_throw[:1]:
         holdout_train = all_data[np.ix_(list(set(all_indices) - set(rows)))]
         holdout_test = all_data[np.ix_(rows)]
         recommender.fit(holdout_train)
