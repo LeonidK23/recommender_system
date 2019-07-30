@@ -86,7 +86,7 @@ class kNNRecommenderUI:
     def collect_I_u(self, I_v):
         return np.intersect1d(self.current_I_u, I_v)
 
-    def pearson_corr(self, mat, alpha=False):
+    def pearson_corr(self, mat, beta=False):
         mat_ok = csr_matrix((mat[:, 2], (mat[:, 0], mat[:, 1]))).T
         mat_1 = csr_matrix((mat[:, 2]+1, (mat[:, 0], mat[:, 1]))).T
         mu = np.zeros((mat_ok.shape[0], 1))
@@ -114,11 +114,10 @@ class kNNRecommenderUI:
                         denumerator = np.sqrt(np.sum(np.square(ratings_u)))*np.sqrt(np.sum(np.square(ratings_v)))
                         if denumerator == 0:
                             denumerator = 1e-4
-                        if alpha != False:
-                            pow = alpha
+                        if beta == False:
+                            corr_mat[i, j] = numerator/denumerator
                         else:
-                            pow = 1
-                        corr_mat[i, j] = np.power(numerator/denumerator, pow)
+                            corr_mat[i, j] = numerator/denumerator*(min(I_u_I_v.shape[0], beta)/beta)
                         # print(ratings_u.shape)
                         # print(ratings_v.shape)
                         # print('-----------------')
@@ -150,7 +149,7 @@ class kNNRecommenderUI:
         # self.sim_mat_items = cosine_similarity(self.train_data)
         # np.fill_diagonal(self.sim_mat_items, -1)
         self.train_data = csr_matrix((train_data[:, 2]+1, (train_data[:, 0], train_data[:, 1]))).T
-        self.sim_mat_items = self.pearson_corr(train_data, alpha=2)
+        self.sim_mat_items = self.pearson_corr(train_data, beta=200)
         np.fill_diagonal(self.sim_mat_items, -1)
 
     def predict(self, test_data):
