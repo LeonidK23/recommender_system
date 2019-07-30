@@ -86,42 +86,49 @@ class kNNRecommenderUI:
     def collect_I_u(self, I_v):
         return np.intersect1d(self.current_I_u, I_v)
 
-    def pearson_corr(self, mat):
+    def pearson_corr(self, mat, alpha=False):
         mat_ok = csr_matrix((mat[:, 2], (mat[:, 0], mat[:, 1]))).T
         mat_1 = csr_matrix((mat[:, 2]+1, (mat[:, 0], mat[:, 1]))).T
         mu = np.zeros((mat_ok.shape[0], 1))
         non_zeros_items_indices = []
         corr_mat = np.zeros((mat_ok.shape[0], mat_ok.shape[0]))
         corr_mat[:] = np.nan
-<<<<<<< HEAD
         non_zeros = np.argwhere(mat_1 > 0)
         I_v = []
         for i in range(mat_ok.shape[0]):
             mu[i] = np.nan if mat_ok[i, :].data.shape[0]==0 else np.mean(mat_ok[i, :].data)
             I_v.append(non_zeros[non_zeros[:, 0]==i][:, 1])
 
-        # for i in range(mat_ok.shape[0]):
-        #     I_u = mat_1[i, :].nonzero()[1]
-        #     if np.isnan(mu[i]) == False:
-        #         # func = partial(self.compute_similarity, mat_1, I_u, mu[i], mu)
-        #         # with Pool(4) as p:
-        #         #     print(p.starmap(self.compute_similarity, (mat_1, I_u, mu[i], mu, I_v)))
-        #         for j in range(len(I_v)):
-        #             I_u_I_v = np.intersect1d(I_u, I_v[j])
-        #             if I_u_I_v.shape[0] > 0:
-        #                 ratings_u = mat_1[i, I_u_I_v].data - 1 - mu[i]
-        #                 ratings_v = mat_1[j, I_u_I_v].data - 1 - mu[j]
-        #                 numerator = np.sum(np.multiply(ratings_u, ratings_v))
-        #                 denumerator = np.sqrt(np.sum(np.square(ratings_u)))*np.sqrt(np.sum(np.square(ratings_v)))
-        #                 corr_mat[i, j] = numerator/denumerator
-        #                 # print(numerator/denumerator)
-        #                 # print('-----------------')
-        #             else:
-        #                 corr_mat[i, j] = np.nan
-        #     else:
-        #         corr_mat[i, :] = np.nan
-        #     print(i)
-        corr_mat = np.load("data/pears_corr_20190729-141531.npy")
+        for i in range(mat_ok.shape[0]):
+            I_u = mat_1[i, :].nonzero()[1]
+            if np.isnan(mu[i]) == False:
+                # func = partial(self.compute_similarity, mat_1, I_u, mu[i], mu)
+                # with Pool(4) as p:
+                #     print(p.starmap(self.compute_similarity, (mat_1, I_u, mu[i], mu, I_v)))
+                for j in range(len(I_v)):
+                    I_u_I_v = np.intersect1d(I_u, I_v[j])
+                    if I_u_I_v.shape[0] > 0:
+                        ratings_u = mat_1[i, I_u_I_v].data - 1 - mu[i]
+                        ratings_v = mat_1[j, I_u_I_v].data - 1 - mu[j]
+                        numerator = np.sum(np.multiply(ratings_u, ratings_v))
+                        denumerator = np.sqrt(np.sum(np.square(ratings_u)))*np.sqrt(np.sum(np.square(ratings_v)))
+                        if denumerator == 0:
+                            denumerator = 1e-4
+                        if alpha != False:
+                            pow = alpha
+                        else:
+                            pow = 1
+                        corr_mat[i, j] = np.power(numerator/denumerator, pow)
+                        # print(ratings_u.shape)
+                        # print(ratings_v.shape)
+                        # print('-----------------')
+                    else:
+                        corr_mat[i, j] = np.nan
+            else:
+                corr_mat[i, :] = np.nan
+            print(i)
+        # corr_mat = np.load("data/pears_corr_20190729-141531.npy")
+        # corr_mat = np.load("data/pears_corr_user_20190729-153839.npy")
 
             # if I_u.shape[0] > 0:
             #     # center_i = mat[i, :] - mu[i]
@@ -132,50 +139,18 @@ class kNNRecommenderUI:
             # else:
             #     corr_mat[i, :] = np.nan
 
-        #import time
-        # timestr = datetime.now().strftime("%Y%m%d-%H%M%S")
-        # np.save('data/pears_corr_'+timestr+'.npy', corr_mat)
-=======
-        non_zeros_items_indices = np.array(list(set(mat_ok.nonzero()[0])))
-        non_zeros_items = mat_ok[non_zeros_items_indices, :]
-        non_zeros_mu = mu[non_zeros_items_indices]
-        centered_items = non_zeros_items - non_zeros_mu
-        I_v = []
-        for i in range(mat_ok.shape[0]):
-            mu[i] = np.nan if mat_ok[i, :].data.shape[0]==0 else np.mean(mat_ok[i, :].data)
-            I_v.append(mat_1[i, :].nonzero()[1])
->>>>>>> dd635ee411a7cc946a581771dc7bcd3ecaf5d551
+        import time
+        timestr = datetime.now().strftime("%Y%m%d-%H%M%S")
+        np.save('data/pears_corr_'+timestr+'.npy', corr_mat)
 
-        for i in range(mat_ok.shape[0]):
-            I_u = mat_1[i+1200, :].nonzero()[1]
-            for j in range(len(I_v)):
-                print(I_u.shape)
-                print(I_v[j].shape)
-                I_u_I_v = np.intersect1d(I_u, I_v[j])
-                print(I_u_I_v.shape)
-                ratings_u = mat_1[i+1200, I_u_I_v].data - 1
-                ratings_v = mat_1[j, I_u_I_v].data - 1
-                print(ratings_u)
-                print(ratings_v)
-                print('-----------------')
-            # if I_u.shape[0] > 0:
-            #     # center_i = mat[i, :] - mu[i]
-            #     center_i = mat[i, :]
-            #     numerator = np.sum(np.multiply(center_i, centered_items), axis=1)
-            #     denumerator = np.sqrt(np.sum(np.square(center_i)))*np.sqrt(np.sum(np.square(centered_items), axis=1))
-            #     corr_mat[i, non_zeros_items_indices] = np.divide(numerator, denumerator).reshape(-1)
-            # else:
-            #     corr_mat[i, :] = np.nan
-        #
-        # return corr_mat
+        return corr_mat
 
     def fit(self, train_data):
         # self.train_data = csr_matrix((train_data[:, 2], (train_data[:, 0], train_data[:, 1]))).todense().T
         # self.sim_mat_items = cosine_similarity(self.train_data)
         # np.fill_diagonal(self.sim_mat_items, -1)
         self.train_data = csr_matrix((train_data[:, 2]+1, (train_data[:, 0], train_data[:, 1]))).T
-        self.sim_mat_items = self.pearson_corr(train_data)
-<<<<<<< HEAD
+        self.sim_mat_items = self.pearson_corr(train_data, alpha=2)
         np.fill_diagonal(self.sim_mat_items, -1)
 
     def predict(self, test_data):
@@ -199,68 +174,64 @@ class kNNRecommenderUI:
         #         predictions.append([user, item, prediction])
 
 
-=======
-
-    def predict(self, test_data):
-        # The best config
->>>>>>> dd635ee411a7cc946a581771dc7bcd3ecaf5d551
         items_user = self.collect_items_user_dict(test_data)
         predictions = []
         for item in items_user:
-            closest_dists = np.sort(self.sim_mat_items[item, :])[-self.n_neighbours:]
-            nearest_items = []
-            for dist in closest_dists:
-                nearest_items.append(np.where(self.sim_mat_items[item, :] == dist)[0][0])
-            nearest_feedbacks = self.train_data[np.array(nearest_items), :]
+            dists = np.sort(self.sim_mat_items[item, :])
+            num_dists = dists[~np.isnan(dists)]
+            nearest_dists = num_dists[-self.n_neighbours:]
+            nearest_items_inds = []
+            for dist in nearest_dists:
+                nearest_items_inds.append(np.where(self.sim_mat_items[item, :] == dist)[0][0])
+            nearest_items = self.train_data[np.array(nearest_items_inds), :]
             for user in items_user[item]:
-<<<<<<< HEAD
                 nearest_ratings = nearest_items[:, user].data - 1
                 if nearest_ratings.shape[0] > 0:
                     ratings_inds = nearest_items[:, user].nonzero()[0]
-                    # print(nearest_ratings)
                     # print(ratings_inds)
+                    # print(nearest_ratings)
+                    # print(nearest_dists[ratings_inds])
                     # print('----------------------------------------')
                     prediction = np.sum(np.multiply(nearest_dists[ratings_inds], nearest_ratings))/np.sum(nearest_dists[ratings_inds])
                 else:
-                    # prediction = np.mean(self.train_data[:, user].data)
-                    # if np.isnan(prediction):
-                    prediction = np.mean(self.train_data[item, :])
-
-
+                    prediction = np.mean(self.train_data[:, user].data)
+                    if np.isnan(prediction):
+                        prediction = np.mean(self.train_data[item, :].data)
+                    # prediction = 0
 
                 predictions.append([user, item, np.mean(self.train_data[item, :]) if np.isnan(prediction) else prediction])
-=======
-                prediction = np.sqrt(np.sum(np.square(nearest_feedbacks[:, user])))/self.n_neighbours*2.5
-                # if nearest_feedbacks[:, user].data.shape[0] == 0:
-                #     prediction = 0
-                # else:
-                #     prediction = np.mean(nearest_feedbacks[:, user].data)
-                predictions.append([user, item, prediction])
 
 
-        # items_user = self.collect_items_user_dict(test_data)
+
+
+        # items_user = self.collect_user_items_dict(test_data)
         # predictions = []
-        # for item in items_user:
-        #     dists = np.sort(self.sim_mat_items[item, :])
+        # for user in items_user:
+        #     dists = np.sort(self.sim_mat_items[user, :])
         #     num_dists = dists[~np.isnan(dists)]
         #     nearest_dists = num_dists[-self.n_neighbours:]
         #     nearest_items_inds = []
         #     for dist in nearest_dists:
-        #         nearest_items_inds.append(np.where(self.sim_mat_items[item, :] == dist)[0][0])
+        #         nearest_items_inds.append(np.where(self.sim_mat_items[user, :] == dist)[0][0])
         #     nearest_items = self.train_data[np.array(nearest_items_inds), :]
-        #     for user in items_user[item]:
-        #         nearest_ratings = nearest_items[:, user].data
-        #         ratings_inds = nearest_items[:, user].nonzero()[0]
-        #         # print(nearest_dists)
-        #         # print(nearest_ratings - np.mean(nearest_ratings))
-        #         # print(nearest_ratings)
-        #         # print(ratings_inds)
-        #         # print(nearest_dists)
-        #         # print(nearest_dists[ratings_inds])
-        #         # print(np.sum(nearest_dists[ratings_inds]))
-        #         # print('----------------------------------------')
-        #         prediction = np.sum(np.multiply(nearest_dists[ratings_inds], nearest_ratings))/np.sum(nearest_dists[ratings_inds])
-        #         predictions.append([user, item, np.mean(self.train_data[item, :]) if np.isnan(prediction) else prediction])
->>>>>>> dd635ee411a7cc946a581771dc7bcd3ecaf5d551
+        #     for item in items_user[user]:
+        #         nearest_ratings = nearest_items[:, item].data - 1
+        #         if nearest_ratings.shape[0] > 0:
+        #             ratings_inds = nearest_items[:, item].nonzero()[0]
+        #             # print(nearest_ratings)
+        #             # print(ratings_inds)
+        #             # print('----------------------------------------')
+        #             numerator = np.sum(np.multiply(nearest_dists[ratings_inds], nearest_ratings))
+        #             denumerator = np.sum(nearest_dists[ratings_inds])
+        #             if denumerator == 0:
+        #                 denumerator = 1e-4
+        #             prediction = numerator/denumerator
+        #         else:
+        #             # prediction = np.mean(self.train_data[:, user].data)
+        #             # if np.isnan(prediction):
+        #             prediction = np.mean(self.train_data[user, :])
+        #
+        #         predictions.append([user, item, np.mean(self.train_data[user, :]) if np.isnan(prediction) else prediction])
+
 
         return np.array(predictions)
