@@ -27,16 +27,16 @@ X_train = np.genfromtxt(os.path.join("data", "train.csv"), delimiter=",", dtype=
 # clf_knn_II.fit(X_train)
 # predictions_kNN_II = clf_knn_II.predict(X_test)
 #
-clf_knn_UI = kNNRecommenderUI(9)
-clf_knn_UI.fit(X_train)
-predictions_kNN_UI = clf_knn_UI.predict(X_test)
+# clf_knn_UI = kNNRecommenderUI(9)
+# clf_knn_UI.fit(X_train)
+# predictions_kNN_UI = clf_knn_UI.predict(X_test)
 #
 # clf = RandomRecommender() # Error = 41.5
 # clf = MeanRecommender() # Error = 5.5
 # clf = kNNRecommenderUU(3) # Error = 4.3
 # clf = kNNRecommenderII(3) # Error = appr. 3.7
-# clf = kNNRecommenderUI(9) # Error = 1.9
-# acc = cross_validation(clf, X_train)
+clf = kNNRecommenderUI(9) # Error = 1.9
+acc = cross_validation(clf, X_train)
 # print(acc)
 
 # np.savetxt("data/qualifying_mean.csv", predictions_mean,
@@ -47,8 +47,8 @@ predictions_kNN_UI = clf_knn_UI.predict(X_test)
 #           delimiter=",", newline="\n", encoding="utf-8")
 # np.savetxt("data/qualifying_knn_II.csv", predictions_kNN_II,
 #           delimiter=",", newline="\n", encoding="utf-8")
-np.savetxt("data/qualifying_knn_UI.csv", predictions_kNN_UI,
-          delimiter=",", newline="\n", encoding="utf-8")
+# np.savetxt("data/qualifying_knn_UI.csv", predictions_kNN_UI,
+#           delimiter=",", newline="\n", encoding="utf-8")
 # np.savetxt("data/qualifying_hybrid.csv", final_pred,
 #         delimiter=",", newline="\n", encoding="utf-8")
 

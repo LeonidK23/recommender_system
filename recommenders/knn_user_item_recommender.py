@@ -99,35 +99,35 @@ class kNNRecommenderUI:
             mu[i] = np.nan if mat_ok[i, :].data.shape[0]==0 else np.mean(mat_ok[i, :].data)
             I_v.append(non_zeros[non_zeros[:, 0]==i][:, 1])
 
-        for i in range(mat_ok.shape[0]):
-            I_u = mat_1[i, :].nonzero()[1]
-            if np.isnan(mu[i]) == False:
-                # func = partial(self.compute_similarity, mat_1, I_u, mu[i], mu)
-                # with Pool(4) as p:
-                #     print(p.starmap(self.compute_similarity, (mat_1, I_u, mu[i], mu, I_v)))
-                for j in range(len(I_v)):
-                    I_u_I_v = np.intersect1d(I_u, I_v[j])
-                    if I_u_I_v.shape[0] > 0:
-                        ratings_u = mat_1[i, I_u_I_v].data - 1 - mu[i]
-                        ratings_v = mat_1[j, I_u_I_v].data - 1 - mu[j]
-                        numerator = np.sum(np.multiply(ratings_u, ratings_v))
-                        denumerator = np.sqrt(np.sum(np.square(ratings_u)))*np.sqrt(np.sum(np.square(ratings_v)))
-                        if denumerator == 0:
-                            denumerator = 1e-4
-                        if beta == False:
-                            corr_mat[i, j] = numerator/denumerator
-                        else:
-                            corr_mat[i, j] = numerator/denumerator*(min(I_u_I_v.shape[0], beta)/beta)
-                        # print(ratings_u.shape)
-                        # print(ratings_v.shape)
-                        # print('-----------------')
-                    else:
-                        corr_mat[i, j] = np.nan
-            else:
-                corr_mat[i, :] = np.nan
-            print(i)
+        # for i in range(mat_ok.shape[0]):
+        #     I_u = mat_1[i, :].nonzero()[1]
+        #     if np.isnan(mu[i]) == False:
+        #         for j in range(len(I_v)):
+        #             I_u_I_v = np.intersect1d(I_u, I_v[j])
+        #             if I_u_I_v.shape[0] > 0:
+        #                 ratings_u = mat_1[i, I_u_I_v].data - 1 - mu[i]
+        #                 ratings_v = mat_1[j, I_u_I_v].data - 1 - mu[j]
+        #                 numerator = np.sum(np.multiply(ratings_u, ratings_v))
+        #                 denumerator = np.sqrt(np.sum(np.square(ratings_u)))*np.sqrt(np.sum(np.square(ratings_v)))
+        #                 if denumerator == 0:
+        #                     denumerator = 1e-4
+        #                 if beta == False:
+        #                     corr_mat[i, j] = numerator/denumerator
+        #                 else:
+        #                     # print(min(I_u_I_v.shape[0], beta)/beta)
+        #                     corr_mat[i, j] = (I_u_I_v.shape[0]/beta)*numerator/denumerator
+        #                 # print(ratings_u.shape)
+        #                 # print(ratings_v.shape)
+        #                 # print('-----------------')
+        #             else:
+        #                 corr_mat[i, j] = np.nan
+        #     else:
+        #         corr_mat[i, :] = np.nan
+        #     print(i)
+        # corr_mat = np.load("data/pears_corr_20190730-225259.npy")
+        corr_mat = np.load("data/pears_corr_20190730-212646.npy")
         # corr_mat = np.load("data/pears_corr_20190729-141531.npy")
-        # corr_mat = np.load("data/pears_corr_user_20190729-153839.npy")
+        corr_mat_u = np.load("data/pears_corr_user_20190729-153839.npy")
 
             # if I_u.shape[0] > 0:
             #     # center_i = mat[i, :] - mu[i]
@@ -138,18 +138,18 @@ class kNNRecommenderUI:
             # else:
             #     corr_mat[i, :] = np.nan
 
-        import time
-        timestr = datetime.now().strftime("%Y%m%d-%H%M%S")
-        np.save('data/pears_corr_'+timestr+'.npy', corr_mat)
+        # import time
+        # timestr = datetime.now().strftime("%Y%m%d-%H%M%S")
+        # np.save('data/pears_corr_'+timestr+'.npy', corr_mat)
 
-        return corr_mat
+        return (corr_mat, corr_mat_u)
 
     def fit(self, train_data):
         # self.train_data = csr_matrix((train_data[:, 2], (train_data[:, 0], train_data[:, 1]))).todense().T
         # self.sim_mat_items = cosine_similarity(self.train_data)
         # np.fill_diagonal(self.sim_mat_items, -1)
         self.train_data = csr_matrix((train_data[:, 2]+1, (train_data[:, 0], train_data[:, 1]))).T
-        self.sim_mat_items = self.pearson_corr(train_data, beta=200)
+        self.sim_mat_items, self.sim_mat_users = self.pearson_corr(train_data, beta=200)
         np.fill_diagonal(self.sim_mat_items, -1)
 
     def predict(self, test_data):
@@ -191,12 +191,19 @@ class kNNRecommenderUI:
                     # print(nearest_ratings)
                     # print(nearest_dists[ratings_inds])
                     # print('----------------------------------------')
-                    prediction = np.sum(np.multiply(nearest_dists[ratings_inds], nearest_ratings))/np.sum(nearest_dists[ratings_inds])
+                    prediction = np.sum(np.multiply(np.square(nearest_dists[ratings_inds]), nearest_ratings))/np.sum(np.square(nearest_dists[ratings_inds]))
+                    # mu_u = np.mean(self.train_data[item, :].data)
+                    # nearest_ratings = nearest_ratings - mu_u
+                    # prediction = mu_u + np.sum(np.multiply(nearest_dists[ratings_inds], nearest_ratings))/np.sum(nearest_dists[ratings_inds])
+                    # Use Z-score
+                    # sigma = np.sqrt(np.sum(np.square(self.train_data[item, :].data - np.mean(self.train_data[item, :].data)))/(self.train_data[item, :].data.shape[0] - 1))
+                    # z = (nearest_ratings - np.mean(self.train_data[item, :].data))/sigma
+                    # prediction = max(0, np.mean(self.train_data[item, :].data) + sigma*np.sum(np.multiply(nearest_dists[ratings_inds], z))/np.sum(nearest_dists[ratings_inds]))
                 else:
-                    prediction = np.mean(self.train_data[:, user].data)
-                    if np.isnan(prediction):
-                        prediction = np.mean(self.train_data[item, :].data)
-                    # prediction = 0
+                    # prediction = np.mean(self.train_data[:, user].data)
+                    # if np.isnan(prediction):
+                    prediction = np.mean(self.train_data[item, :].data)
+                    # prediction = self.global_mean
 
                 predictions.append([user, item, np.mean(self.train_data[item, :]) if np.isnan(prediction) else prediction])
 
@@ -220,10 +227,10 @@ class kNNRecommenderUI:
         #             # print(nearest_ratings)
         #             # print(ratings_inds)
         #             # print('----------------------------------------')
-        #             numerator = np.sum(np.multiply(nearest_dists[ratings_inds], nearest_ratings))
-        #             denumerator = np.sum(nearest_dists[ratings_inds])
+        #             numerator = np.sum(np.multiply(np.square(nearest_dists[ratings_inds]), nearest_ratings))
+        #             denumerator = np.sum(np.square(nearest_dists[ratings_inds]))
         #             if denumerator == 0:
-        #                 denumerator = 1e-4
+        #                 denumerator = 1e-8
         #             prediction = numerator/denumerator
         #         else:
         #             # prediction = np.mean(self.train_data[:, user].data)
