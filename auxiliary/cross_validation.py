@@ -17,14 +17,15 @@ def cross_validation(recommender, data, k=10):
 
     all_indices = [ind for ind in range(len(data))]
     mse = 0
-    for rows in rows_to_throw:
-        holdout_train = all_data[np.ix_(list(set(all_indices) - set(rows)))]
-        holdout_test = all_data[np.ix_(rows)]
+    for i in range(len(rows_to_throw)):
+        holdout_train = all_data[np.ix_(list(set(all_indices) - set(rows_to_throw[i])))]
+        holdout_test = all_data[np.ix_(rows_to_throw[i])]
         recommender.fit(holdout_train)
         predictions = recommender.predict(holdout_test[:, :-1])
         predictions_csr = csr_matrix((predictions[:, 2], (predictions[:, 0].astype(int), predictions[:, 1].astype(int))))
         holdout_test_csr = csr_matrix((holdout_test[:, 2], (holdout_test[:, 0], holdout_test[:, 1])))
-        mse += np.sqrt(np.sum(np.square(predictions_csr.todense() - holdout_test_csr.todense()))/len(predictions))
-        print(mse)
+        error = np.sqrt(np.sum(np.square(predictions_csr.todense() - holdout_test_csr.todense()))/len(predictions))
+        mse += error
+        print('Error on', i, 'step:', error)
 
     return mse/k

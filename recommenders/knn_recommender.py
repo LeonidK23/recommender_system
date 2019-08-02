@@ -15,7 +15,7 @@ class kNNRecommender:
         np.fill_diagonal(self.sim_mat_items, -1)
 
     def load_pearson(self):
-        return np.load("data/pears_corr_20190730-212646.npy")
+        return np.load("data/pears_corr.npy")
 
     def compute_pearson(self, mat, beta=False):
         mat = csr_matrix((mat[:, 2] + 1, (mat[:, 0], mat[:, 1]))).T
