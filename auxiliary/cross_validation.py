@@ -24,7 +24,7 @@ def cross_validation(recommender, data, k=10):
         predictions = recommender.predict(holdout_test[:, :-1])
         predictions_csr = csr_matrix((predictions[:, 2], (predictions[:, 0].astype(int), predictions[:, 1].astype(int))))
         holdout_test_csr = csr_matrix((holdout_test[:, 2], (holdout_test[:, 0], holdout_test[:, 1])))
-        mse += np.sqrt(np.sum(np.square(predictions_csr.todense() - holdout_test_csr.todense()))/predictions_csr.shape[0])
+        mse += np.sqrt(np.sum(np.square(predictions_csr.todense() - holdout_test_csr.todense()))/len(predictions))
         print(mse)
 
     return mse/k
