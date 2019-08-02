@@ -38,15 +38,15 @@ class kNNRecommender:
                         centered_ratings_u = mat[i, I_u_I_v].data - 1 - mu[i]
                         centered_ratings_v = mat[j, I_u_I_v].data - 1 - mu[j]
                         numerator = np.sum(np.multiply(centered_ratings_u, centered_ratings_v))
-                        denumerator = np.sqrt(np.sum(np.square(centered_ratings_u)))* \
+                        denominator = np.sqrt(np.sum(np.square(centered_ratings_u)))* \
                                       np.sqrt(np.sum(np.square(centered_ratings_u)))
-                        if denumerator == 0:
-                            denumerator = 1e-6
+                        if denominator == 0:
+                            denominator = 1e-6
                         if beta == False:
-                            corr_mat[i, j] = numerator/denumerator
+                            corr_mat[i, j] = numerator/denominator
                         else:
                             # significance weighting
-                            corr_mat[i, j] = (I_u_I_v.shape[0]/beta)*numerator/denumerator
+                            corr_mat[i, j] = (I_u_I_v.shape[0]/beta)*numerator/denominator
                     else:
                         corr_mat[i, j] = np.nan
             else:
